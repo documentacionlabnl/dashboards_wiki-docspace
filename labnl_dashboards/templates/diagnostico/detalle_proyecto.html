@@ -1,0 +1,263 @@
+{% extends "diagnostico/base.html" %}
+{% block title %}{{ proyecto.nombre }} · Wikis LABNL{% endblock %}
+{% block nav_wikis %}active{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  details { border-bottom: 1px solid var(--border); }
+  details:last-child { border-bottom: none; }
+
+  summary {
+    display: grid;
+    grid-template-columns: 24px 1fr 160px auto auto;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 12px;
+    cursor: pointer;
+    list-style: none;
+    transition: background 0.15s;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary:hover { background: var(--bg-alt); }
+  details[open] summary { background: var(--bg-alt); }
+
+  .toggle-icon {
+    font-size: 0.7rem; color: var(--text-muted);
+    transition: transform 0.2s; display: inline-block;
+  }
+  details[open] .toggle-icon { transform: rotate(90deg); }
+
+  .proto-name { font-size: 0.875rem; font-weight: 500; }
+  .proto-count { font-family: var(--mono); font-size: 0.75rem; color: var(--text-secondary); }
+  .progress-label { font-family: var(--mono); font-size: 0.8rem; font-weight: 700; text-align: right; min-width: 48px; }
+
+  /* Contenido expandido */
+  .detail-body {
+    padding: 16px 20px 24px 52px;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 768px) {
+    .detail-body { grid-template-columns: 1fr; padding: 12px 12px 20px; }
+  }
+
+  /* Gráfica */
+  .chart-wrap {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px; background: var(--bg);
+    position: relative;
+    height: 220px;
+  }
+  .chart-canvas-wrap {
+    position: relative;
+    height: 160px;
+  }
+  .chart-title {
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 12px;
+  }
+
+  /* Tabla de criterios */
+  .criteria-table { width: 100%; border-collapse: collapse; }
+  .criteria-table th {
+    text-align: left; font-size: 0.7rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted);
+    padding: 8px 12px; background: var(--bg-alt); border-bottom: 1px solid var(--border);
+  }
+  .criteria-table td {
+    padding: 10px 12px; border-bottom: 1px solid var(--border);
+    font-size: 0.82rem; vertical-align: top;
+  }
+  .criteria-table tr:last-child td { border-bottom: none; }
+
+  .subseccion-name { font-weight: 500; }
+  .nota-mejora {
+    font-size: 0.75rem; color: var(--text-secondary);
+    margin-top: 3px; line-height: 1.4;
+    padding: 4px 8px; background: #fffbeb;
+    border-left: 2px solid #f59e0b;
+    border-radius: 0 4px 4px 0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav class="breadcrumb">
+  <a href="/wikis/">Wikis</a>
+  <span class="sep">/</span>
+  <span class="current">{{ proyecto.nombre }}</span>
+</nav>
+
+<!-- Header -->
+<div style="margin-bottom: 24px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+  <div>
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
+      <h1 style="font-size: 1.3rem; font-weight: 700;">{{ proyecto.nombre }}</h1>
+      <span class="tag">{{ proyecto.actividad.nombre }}</span>
+      {% if proyecto.status %}<span class="tag">{{ proyecto.status }}</span>{% endif %}
+    </div>
+    <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 12px;">
+      {{ prototipos_data|length }} prototipo{{ prototipos_data|length|pluralize:"s" }}
+      {% if proyecto.año_inicio %} · {{ proyecto.año_inicio }}{% if proyecto.año_fin %} – {{ proyecto.año_fin }}{% endif %}{% endif %}
+    </p>
+    {% if prototipos_data %}
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div class="progress-bar" style="width: 200px;">
+        <div class="progress-bar__fill" style="width: {{ avance_proyecto }}%;"></div>
+      </div>
+      <span style="font-family: var(--mono); font-size: 0.85rem; font-weight: 700;">{{ avance_proyecto }}% avance total</span>
+    </div>
+    {% endif %}
+  </div>
+  {% if proyecto.enlace_wiki_proyecto %}
+    <a href="{{ proyecto.enlace_wiki_proyecto }}" target="_blank" rel="noopener" class="btn-wiki">
+      Ver wiki del proyecto →
+    </a>
+  {% endif %}
+</div>
+
+<!-- Lista de prototipos -->
+<div style="border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;">
+
+  <div style="display: grid; grid-template-columns: 24px 1fr 160px auto auto; gap: 16px; padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--bg-alt);">
+    <span></span>
+    <span style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted);">Prototipo</span>
+    <span style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted);">Avance</span>
+    <span></span>
+    <span></span>
+  </div>
+
+  {% for item in prototipos_data %}
+  <details>
+    <summary>
+      <span class="toggle-icon">▶</span>
+
+      <div>
+        <div class="proto-name">{{ item.prototipo.nombre }}</div>
+        <div class="proto-count">{{ item.completas }} / {{ item.total }} subsecciones completas</div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="progress-bar" style="flex: 1; min-width: 80px;">
+          <div class="progress-bar__fill" style="width: {{ item.avance }}%;"></div>
+        </div>
+        <span class="progress-label">{{ item.avance }}%</span>
+      </div>
+
+      <span></span>
+
+      {% if item.prototipo.url_wiki %}
+        <a href="{{ item.prototipo.url_wiki }}" target="_blank" rel="noopener"
+           class="btn-wiki" onclick="event.stopPropagation()">
+          Ver wiki →
+        </a>
+      {% else %}
+        <span style="width: 76px; display: inline-block;"></span>
+      {% endif %}
+    </summary>
+
+    <div class="detail-body">
+
+      <!-- Gráfica de secciones -->
+      <div class="chart-wrap">
+        <div class="chart-title">Avance por sección</div>
+        <div class="chart-canvas-wrap">
+          <canvas id="chart-{{ item.prototipo.id }}"
+                  data-labels='[{% for s in item.seccion_stats %}"{{ s.seccion }}"{% if not forloop.last %},{% endif %}{% endfor %}]'
+                  data-completas='[{% for s in item.seccion_stats %}{{ s.completas }}{% if not forloop.last %},{% endif %}{% endfor %}]'
+                  data-incompletas='[{% for s in item.seccion_stats %}{{ s.incompletas }}{% if not forloop.last %},{% endif %}{% endfor %}]'
+                  data-vacias='[{% for s in item.seccion_stats %}{{ s.vacias }}{% if not forloop.last %},{% endif %}{% endfor %}]'
+          ></canvas>
+        </div>
+      </div>
+
+      <!-- Tabla de subsecciones -->
+      <div style="border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;">
+        <table class="criteria-table">
+          <thead>
+            <tr>
+              <th style="width: 130px;">Sección</th>
+              <th>Subsección</th>
+              <th style="width: 110px;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for seccion, evals in item.secciones.items %}
+              {% for ev in evals %}
+              <tr>
+                {% if forloop.first %}
+                <td rowspan="{{ evals|length }}"
+                    style="font-weight: 600; font-size: 0.78rem; color: var(--text-secondary); border-right: 1px solid var(--border);">
+                  {{ seccion }}
+                </td>
+                {% endif %}
+                <td>
+                  <div class="subseccion-name">{{ ev.subseccion }}</div>
+                  {% if ev.notas_mejora %}
+                    <div class="nota-mejora">💡 {{ ev.notas_mejora }}</div>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if ev.status_final_cache == "Completa" %}
+                    <span class="status status--completa">Completa</span>
+                  {% elif ev.status_final_cache == "Incompleta" %}
+                    <span class="status status--incompleta">Incompleta</span>
+                  {% else %}
+                    <span class="status status--vacia">Vacía</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- /detail-body -->
+  </details>
+  {% empty %}
+  <div style="padding: 40px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+    Este proyecto no tiene prototipos registrados.
+  </div>
+  {% endfor %}
+
+</div>
+
+<script>
+document.querySelectorAll("canvas[id^='chart-']").forEach(canvas => {
+  const labels     = JSON.parse(canvas.dataset.labels);
+  const completas  = JSON.parse(canvas.dataset.completas);
+  const incompletas= JSON.parse(canvas.dataset.incompletas);
+  const vacias     = JSON.parse(canvas.dataset.vacias);
+
+  new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        { label: "Completa",    data: completas,   backgroundColor: "#16a34a", borderRadius: 3 },
+        { label: "Incompleta",  data: incompletas, backgroundColor: "#dc2626", borderRadius: 3 },
+        { label: "Vacía",       data: vacias,      backgroundColor: "#e5e7eb", borderRadius: 3 },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "bottom", labels: { font: { family: "Inter", size: 11 }, boxWidth: 10 } },
+      },
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { font: { family: "Inter", size: 11 } } },
+        y: { stacked: true, beginAtZero: true, ticks: { precision: 0, font: { family: "Inter", size: 11 } } },
+      },
+    },
+  });
+});
+</script>
+
+{% endblock %}

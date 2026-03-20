@@ -1,0 +1,240 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Documentación LABNL{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --bg-alt: #f9fafb;
+      --bg-hover: #f3f4f6;
+      --text: #1a1a1a;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
+      --accent: #2563eb;
+      --accent-light: #eff6ff;
+      --border: #e5e7eb;
+      --border-dark: #1a1a1a;
+      --radius: 8px;
+      --font: 'Inter', -apple-system, sans-serif;
+      --mono: 'Space Mono', 'Roboto Mono', monospace;
+      --completa: #16a34a;
+      --completa-bg: #f0fdf4;
+      --incompleta: #dc2626;
+      --incompleta-bg: #fef2f2;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+    }
+    .header-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 56px; gap: 16px;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 8px;
+      text-decoration: none; color: var(--text);
+      font-family: var(--mono); font-size: 0.9rem; font-weight: 700;
+      letter-spacing: 0.5px; white-space: nowrap;
+    }
+    .logo:hover { opacity: 0.7; }
+    .logo img { height: 32px; vertical-align: middle; }
+    .nav { display: flex; }
+    .nav a {
+      padding: 18px 18px; font-size: 0.875rem; font-weight: 500;
+      color: var(--text-secondary); text-decoration: none;
+      border-bottom: 2px solid transparent; transition: all 0.2s;
+    }
+    .nav a:hover { color: var(--text); background: var(--bg-alt); }
+    .nav a.active { color: var(--text); border-bottom-color: var(--border-dark); font-weight: 600; }
+
+    /* ── Barra actualización ── */
+    .update-bar {
+      background: var(--bg-alt); border-bottom: 1px solid var(--border);
+      padding: 6px 24px; text-align: right;
+    }
+    .update-bar span { font-size: 0.75rem; color: var(--text-muted); font-family: var(--mono); }
+
+    /* ── Main ── */
+    .main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; flex: 1; }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 2px; color: var(--text-muted); margin-bottom: 16px;
+    }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: flex; gap: 24px; padding: 16px 0;
+      margin-bottom: 32px; border-bottom: 1px solid var(--border); flex-wrap: wrap;
+    }
+    .stat { font-family: var(--mono); font-size: 0.8rem; color: var(--text-secondary); }
+    .stat strong { color: var(--text); font-size: 1.1rem; }
+
+    /* ── Card grid ── */
+    .card-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px; margin-bottom: 40px;
+    }
+    .card {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 20px; transition: all 0.2s ease;
+      background: var(--bg); text-decoration: none; color: var(--text); display: block;
+    }
+    .card:hover {
+      border-color: var(--border-dark); transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .card-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; }
+    .card-subtitle { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5; }
+
+    /* ── Image card (1:1) ── */
+    .img-card {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden; transition: all 0.2s ease;
+      text-decoration: none; color: var(--text); display: block; background: var(--bg);
+    }
+    .img-card:hover {
+      border-color: var(--border-dark); transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .img-card__photo {
+      width: 100%; aspect-ratio: 1 / 1;
+      object-fit: cover; display: block; background: var(--bg-alt);
+    }
+    .img-card__body { padding: 16px 20px; }
+    .img-card__title { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; }
+    .img-card__desc { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; }
+
+    /* ── Tags ── */
+    .tag {
+      font-size: 0.7rem; padding: 3px 8px; border-radius: 12px;
+      background: var(--bg-alt); color: var(--text-secondary);
+      border: 1px solid var(--border); white-space: nowrap;
+    }
+
+    /* ── Status ── */
+    .status { display: inline-block; font-size: 0.7rem; font-weight: 500; padding: 2px 8px; border-radius: 12px; }
+    .status--completa { background: var(--completa-bg); color: var(--completa); }
+    .status--incompleta { background: var(--incompleta-bg); color: var(--incompleta); }
+    .status--vacia { background: var(--bg-alt); color: var(--text-muted); }
+
+    /* ── Progress bar ── */
+    .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .progress-bar__fill { height: 100%; background: var(--text); border-radius: 2px; transition: width 0.6s; }
+
+    /* ── Botón wiki ── */
+    .btn-wiki {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.75rem; font-family: var(--font);
+      color: var(--accent); background: none; border: 1px solid var(--border);
+      border-radius: 6px; padding: 5px 10px; text-decoration: none; transition: all 0.15s;
+    }
+    .btn-wiki:hover { border-color: var(--accent); background: var(--accent-light); }
+
+    /* ── Filtros ── */
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .filter-select {
+      padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px;
+      font-size: 0.8rem; font-family: var(--font); color: var(--text-secondary);
+      background: var(--bg); outline: none; cursor: pointer;
+    }
+    .filter-select:focus { border-color: var(--border-dark); }
+    .filter-clear {
+      padding: 6px 12px; border: none; background: none;
+      color: var(--accent); font-size: 0.8rem; cursor: pointer; font-family: var(--font);
+    }
+    .filter-clear:hover { text-decoration: underline; }
+
+    /* ── Table ── */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .data-table th {
+      text-align: left; font-size: 0.7rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted);
+      padding: 10px 12px; border-bottom: 1px solid var(--border);
+    }
+    .data-table td { padding: 12px; border-bottom: 1px solid var(--border); }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: var(--bg-alt); }
+
+    /* ── Breadcrumb ── */
+    .breadcrumb {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.8rem; color: var(--text-muted); margin-bottom: 24px;
+    }
+    .breadcrumb a { color: var(--text-secondary); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--text); text-decoration: underline; }
+    .breadcrumb .sep { color: var(--border); }
+    .breadcrumb .current { color: var(--text); font-weight: 500; }
+
+    /* ── Footer ── */
+    .footer {
+      border-top: 1px solid var(--border); padding: 20px 24px;
+      text-align: center; font-size: 0.75rem; color: var(--text-muted);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .header-inner { height: 48px; }
+      .nav a { padding: 12px 12px; font-size: 0.8rem; }
+      .main { padding: 20px 16px; }
+      .card-grid { grid-template-columns: 1fr; }
+      .stats-bar { gap: 16px; }
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-inner">
+      <a href="/" class="logo">
+        <img src="{% static 'Logo_LABNL_Lab_Cultural_Ciudadano.png' %}" alt="LABNL">Dashboards · Documentación
+      </a>
+      <nav class="nav">
+        <a href="/"           class="{% block nav_home %}{% endblock %}">Inicio</a>
+        <a href="/wikis/"     class="{% block nav_wikis %}{% endblock %}">Wikis</a>
+        <a href="/docspaces/" class="{% block nav_docspaces %}{% endblock %}">DocSpaces</a>
+        <a href="/global/"    class="{% block nav_global %}{% endblock %}">Vista global</a>
+      </nav>
+    </div>
+  </header>
+
+  {% if ultima_actualizacion %}
+  <div class="update-bar">
+    <span>Actualizado {{ ultima_actualizacion|date:"j M Y · H:i" }}</span>
+  </div>
+  {% endif %}
+
+  <main class="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    LABNL Lab Cultural Ciudadano
+  </footer>
+
+</body>
+</html>

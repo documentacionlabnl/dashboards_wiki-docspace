@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual environment
+venv/
+
+# Django
+db.sqlite3
+staticfiles/
+
+# Environment variables
+.env
+
+# macOS
+.DS_Store
+
+# Datos intermedios del scraper
+results/
+logs/
+
+# Firebase (no se usa)
+firebase-debug.log

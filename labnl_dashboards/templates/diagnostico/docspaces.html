@@ -1,0 +1,215 @@
+{% extends "diagnostico/base.html" %}
+{% block title %}DocSpaces · Documentación LABNL{% endblock %}
+{% block nav_docspaces %}active{% endblock %}
+
+{% block extra_head %}
+<style>
+  .search-input {
+    padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 0.8rem; font-family: var(--font); color: var(--text);
+    background: var(--bg); outline: none; min-width: 200px;
+  }
+  .search-input:focus { border-color: var(--border-dark); }
+
+  .sort-btn {
+    background: none; border: none; padding: 0; cursor: pointer;
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--text-muted); font-family: inherit;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .sort-btn:hover { color: var(--text); }
+  .sort-btn .sort-arrow { opacity: 0.3; font-size: 0.65rem; }
+  .sort-btn.asc .sort-arrow::after { content: " ↑"; opacity: 1; }
+  .sort-btn.desc .sort-arrow::after { content: " ↓"; opacity: 1; }
+
+  details.ds-row { border-bottom: 1px solid var(--border); }
+  details.ds-row:last-child { border-bottom: none; }
+
+  summary.ds-summary {
+    display: grid;
+    grid-template-columns: 24px 1fr 200px auto;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 12px;
+    cursor: pointer;
+    list-style: none;
+    transition: background 0.15s;
+  }
+  summary.ds-summary::-webkit-details-marker { display: none; }
+  summary.ds-summary:hover { background: var(--bg-alt); }
+  details.ds-row[open] summary.ds-summary { background: var(--bg-alt); }
+
+  .toggle-icon { font-size: 0.7rem; color: var(--text-muted); transition: transform 0.2s; display: inline-block; }
+  details.ds-row[open] .toggle-icon { transform: rotate(90deg); }
+
+  .ds-name { font-size: 0.875rem; font-weight: 500; }
+  .ds-meta { font-size: 0.75rem; color: var(--text-muted); font-family: var(--mono); }
+  .progress-label { font-family: var(--mono); font-size: 0.8rem; font-weight: 700; text-align: right; min-width: 48px; }
+
+  .ds-criteria { padding: 0 12px 16px 52px; }
+
+  .criteria-list { display: flex; flex-direction: column; gap: 6px; }
+  .criteria-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border); border-radius: 6px;
+    background: var(--bg);
+  }
+  .criteria-item__label { flex: 1; font-size: 0.82rem; font-weight: 500; }
+  .nota-mejora {
+    font-size: 0.75rem; color: var(--text-secondary);
+    margin-top: 4px; line-height: 1.4;
+    padding: 4px 8px; background: #fffbeb;
+    border-left: 2px solid #f59e0b;
+    border-radius: 0 4px 4px 0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div style="margin-bottom: 24px;">
+  <h1 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 4px;">DocSpaces</h1>
+  <p style="font-size: 0.85rem; color: var(--text-secondary);">
+    Avance de documentación en DocSpace por proyecto · {{ datos_proyectos|length }} proyecto{{ datos_proyectos|length|pluralize:"s" }}
+  </p>
+</div>
+
+<!-- Filtros -->
+<form method="get" action="/docspaces/">
+  <div class="filters">
+    <select name="actividad" class="filter-select" onchange="this.form.submit()">
+      <option value="">Todas las actividades</option>
+      {% for act in actividades %}
+        <option value="{{ act.nombre }}" {% if filtros.actividad == act.nombre %}selected{% endif %}>
+          {{ act.nombre }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <select name="status" class="filter-select" onchange="this.form.submit()">
+      <option value="">Todos los status</option>
+      <option value="Activo" {% if filtros.status == "Activo" %}selected{% endif %}>Activo</option>
+      <option value="Finalizado" {% if filtros.status == "Finalizado" %}selected{% endif %}>Finalizado</option>
+    </select>
+
+    <select name="año" class="filter-select" onchange="this.form.submit()">
+      <option value="">Todos los años</option>
+      {% for año in años %}
+        <option value="{{ año }}" {% if filtros.año == año|stringformat:"s" %}selected{% endif %}>{{ año }}</option>
+      {% endfor %}
+    </select>
+
+    <input type="text" name="q" value="{{ filtros.q }}" placeholder="Buscar proyecto…" class="search-input">
+
+    <button type="submit" class="filter-select" style="cursor:pointer;">Buscar</button>
+
+    {% if filtros.actividad or filtros.status or filtros.año or filtros.q %}
+      <a href="/docspaces/" class="filter-clear">Restablecer</a>
+    {% endif %}
+  </div>
+</form>
+
+<div style="border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;">
+
+  <!-- Encabezado -->
+  <div style="display: grid; grid-template-columns: 24px 1fr 200px auto; gap: 16px; padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--bg-alt);">
+    <span></span>
+    <button class="sort-btn" data-col="nombre">Proyecto <span class="sort-arrow"></span></button>
+    <button class="sort-btn" data-col="avance">Avance ({{ datos_proyectos.0.total|default:"7" }} criterios) <span class="sort-arrow"></span></button>
+    <span></span>
+  </div>
+
+  <div id="tabla-docspaces">
+  {% for item in datos_proyectos %}
+  <details class="ds-row"
+    data-nombre="{{ item.proyecto.nombre|lower }}"
+    data-avance="{{ item.avance }}">
+    <summary class="ds-summary">
+      <span class="toggle-icon">▶</span>
+
+      <div>
+        <div class="ds-name">{{ item.proyecto.nombre }}</div>
+        <div class="ds-meta">
+          {{ item.proyecto.actividad.nombre }} · {{ item.completas }}/{{ item.total }} criterios
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="progress-bar" style="flex: 1; min-width: 100px;">
+          <div class="progress-bar__fill" style="width: {{ item.avance }}%;"></div>
+        </div>
+        <span class="progress-label">{{ item.avance }}%</span>
+      </div>
+
+      <span></span>
+    </summary>
+
+    <!-- Criterios expandidos -->
+    <div class="ds-criteria">
+      <div class="criteria-list">
+        {% for ev in item.proyecto.docspaces.all %}
+        <div class="criteria-item">
+          <div style="flex: 1;">
+            <div class="criteria-item__label">{{ ev.get_seccion_display }}</div>
+            {% if ev.notas_mejora %}
+              <div class="nota-mejora">💡 {{ ev.notas_mejora }}</div>
+            {% endif %}
+          </div>
+          {% if ev.status == "Completa" %}
+            <span class="status status--completa">Completa</span>
+          {% else %}
+            <span class="status status--incompleta">Incompleta</span>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </details>
+  {% empty %}
+  <div style="padding: 40px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+    No se encontraron proyectos con los filtros seleccionados.
+  </div>
+  {% endfor %}
+  </div><!-- /tabla-docspaces -->
+
+</div>
+
+<script>
+(function () {
+  const tabla = document.getElementById("tabla-docspaces");
+  if (!tabla) return;
+
+  let currentCol = null;
+  let ascending = true;
+
+  document.querySelectorAll(".sort-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const col = btn.dataset.col;
+      if (currentCol === col) {
+        ascending = !ascending;
+      } else {
+        currentCol = col;
+        ascending = col === "nombre"; // nombre asc por defecto, avance desc
+      }
+
+      document.querySelectorAll(".sort-btn").forEach(b => b.classList.remove("asc", "desc"));
+      btn.classList.add(ascending ? "asc" : "desc");
+
+      const filas = Array.from(tabla.querySelectorAll("details.ds-row"));
+      filas.sort((a, b) => {
+        let va = a.dataset[col];
+        let vb = b.dataset[col];
+        if (col === "avance") { va = parseFloat(va); vb = parseFloat(vb); }
+        if (va < vb) return ascending ? -1 : 1;
+        if (va > vb) return ascending ? 1 : -1;
+        return 0;
+      });
+
+      filas.forEach(f => tabla.appendChild(f));
+    });
+  });
+})();
+</script>
+
+{% endblock %}

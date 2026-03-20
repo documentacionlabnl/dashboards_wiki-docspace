@@ -1,0 +1,190 @@
+{% extends "diagnostico/base.html" %}
+{% block title %}Wikis · Documentación LABNL{% endblock %}
+{% block nav_wikis %}active{% endblock %}
+
+{% block extra_head %}
+<style>
+  .project-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto 160px auto;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--text);
+    transition: background 0.15s;
+  }
+  .project-row:last-child { border-bottom: none; }
+  .project-row:hover { background: var(--bg-alt); }
+  .project-name { font-size: 0.875rem; font-weight: 500; }
+  .project-meta { font-size: 0.75rem; color: var(--text-muted); font-family: var(--mono); }
+  .progress-label { font-family: var(--mono); font-size: 0.8rem; font-weight: 700; text-align: right; min-width: 48px; }
+  .arrow { color: var(--text-muted); font-size: 0.8rem; }
+  .search-input {
+    padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 0.8rem; font-family: var(--font); color: var(--text);
+    background: var(--bg); outline: none; min-width: 200px;
+  }
+  .search-input:focus { border-color: var(--border-dark); }
+  .table-header {
+    display: grid;
+    grid-template-columns: 1fr auto auto 160px auto;
+    gap: 16px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .table-header span {
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--text-muted);
+  }
+  .sort-btn {
+    background: none; border: none; padding: 0; cursor: pointer;
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--text-muted); font-family: inherit;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .sort-btn:hover { color: var(--text); }
+  .sort-btn .sort-arrow { opacity: 0.3; font-size: 0.65rem; }
+  .sort-btn.asc .sort-arrow::after { content: " ↑"; opacity: 1; }
+  .sort-btn.desc .sort-arrow::after { content: " ↓"; opacity: 1; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div style="margin-bottom: 32px;">
+  <h1 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 4px;">Wikis</h1>
+  <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">
+    Avance de documentación por proyecto · {{ datos_proyectos|length }} proyecto{{ datos_proyectos|length|pluralize:"s" }}
+  </p>
+  <p style="font-size: 0.85rem; color: var(--text-muted);">
+    Selecciona tu iniciativa y revisa el avance de tu documentación en la Wiki LABNL.
+  </p>
+</div>
+
+<!-- Filtros -->
+<form method="get" action="/wikis/">
+  <div class="filters">
+    <select name="actividad" class="filter-select" onchange="this.form.submit()">
+      <option value="">Todas las actividades</option>
+      {% for act in actividades %}
+        <option value="{{ act.nombre }}" {% if filtros.actividad == act.nombre %}selected{% endif %}>
+          {{ act.nombre }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <select name="status" class="filter-select" onchange="this.form.submit()">
+      <option value="">Todos los status</option>
+      <option value="Activo" {% if filtros.status == "Activo" %}selected{% endif %}>Activo</option>
+      <option value="Finalizado" {% if filtros.status == "Finalizado" %}selected{% endif %}>Finalizado</option>
+    </select>
+
+    <select name="año" class="filter-select" onchange="this.form.submit()">
+      <option value="">Todos los años</option>
+      {% for año in años %}
+        <option value="{{ año }}" {% if filtros.año == año|stringformat:"s" %}selected{% endif %}>{{ año }}</option>
+      {% endfor %}
+    </select>
+
+    <input type="text" name="q" value="{{ filtros.q }}" placeholder="Buscar proyecto o prototipo…" class="search-input">
+
+    <button type="submit" class="filter-select" style="cursor:pointer;">Buscar</button>
+
+    {% if filtros.actividad or filtros.status or filtros.año or filtros.q %}
+      <a href="/wikis/" class="filter-clear">Restablecer</a>
+    {% endif %}
+  </div>
+</form>
+
+<!-- Tabla -->
+<div style="border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;">
+  <div class="table-header">
+    <button class="sort-btn" data-col="nombre">Proyecto <span class="sort-arrow"></span></button>
+    <button class="sort-btn" data-col="actividad">Actividad <span class="sort-arrow"></span></button>
+    <button class="sort-btn" data-col="prototipos">Prototipos <span class="sort-arrow"></span></button>
+    <button class="sort-btn" data-col="avance">Avance <span class="sort-arrow"></span></button>
+    <span></span>
+  </div>
+
+  <div id="tabla-proyectos">
+  {% for item in datos_proyectos %}
+  <a href="/wikis/{{ item.proyecto.id }}/" class="project-row"
+     data-nombre="{{ item.proyecto.nombre|lower }}"
+     data-actividad="{{ item.proyecto.actividad.nombre|lower }}"
+     data-prototipos="{{ item.num_prototipos }}"
+     data-avance="{{ item.avance }}">
+    <div>
+      <div class="project-name">{{ item.proyecto.nombre }}</div>
+      {% if item.proyecto.status %}
+        <div class="project-meta">{{ item.proyecto.status }}{% if item.proyecto.año_inicio %} · {{ item.proyecto.año_inicio }}{% endif %}</div>
+      {% endif %}
+    </div>
+
+    <div>
+      <span class="tag">{{ item.proyecto.actividad.nombre }}</span>
+    </div>
+
+    <div style="text-align: center; font-family: var(--mono); font-size: 0.8rem; color: var(--text-secondary);">
+      {{ item.num_prototipos }}
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div class="progress-bar" style="flex: 1;">
+        <div class="progress-bar__fill" style="width: {{ item.avance }}%;"></div>
+      </div>
+      <span class="progress-label">{{ item.avance }}%</span>
+    </div>
+
+    <span class="arrow">→</span>
+  </a>
+  {% empty %}
+  <div style="padding: 40px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+    No se encontraron proyectos con los filtros seleccionados.
+  </div>
+  {% endfor %}
+  </div><!-- /tabla-proyectos -->
+</div>
+
+<script>
+(function () {
+  const tabla = document.getElementById("tabla-proyectos");
+  if (!tabla) return;
+
+  let currentCol = null;
+  let ascending = true;
+
+  document.querySelectorAll(".sort-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const col = btn.dataset.col;
+      if (currentCol === col) {
+        ascending = !ascending;
+      } else {
+        currentCol = col;
+        ascending = true;
+      }
+
+      // Actualizar clases visuales
+      document.querySelectorAll(".sort-btn").forEach(b => b.classList.remove("asc", "desc"));
+      btn.classList.add(ascending ? "asc" : "desc");
+
+      // Ordenar filas
+      const filas = Array.from(tabla.querySelectorAll("a.project-row"));
+      filas.sort((a, b) => {
+        let va = a.dataset[col];
+        let vb = b.dataset[col];
+        const isNum = col === "prototipos" || col === "avance";
+        if (isNum) { va = parseFloat(va); vb = parseFloat(vb); }
+        if (va < vb) return ascending ? -1 : 1;
+        if (va > vb) return ascending ? 1 : -1;
+        return 0;
+      });
+
+      filas.forEach(f => tabla.appendChild(f));
+    });
+  });
+})();
+</script>
+
+{% endblock %}

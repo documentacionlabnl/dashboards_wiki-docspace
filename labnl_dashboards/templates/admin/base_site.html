@@ -1,0 +1,107 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} — Panel LABNL{% endblock %}
+
+{% block branding %}
+<div id="site-name">
+  <a href="{% url 'admin:index' %}" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
+    <img src="{% static 'Logo_LABNL_Lab_Cultural_Ciudadano.png' %}" alt="LABNL" style="height:28px; filter:brightness(0) invert(1);">
+    <span style="font-family:'Space Mono',monospace; font-size:13px; font-weight:700; color:#fff; letter-spacing:0.5px;">Dashboards · Documentación</span>
+  </a>
+</div>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* Forzar modo claro — Django 4.2+ usa prefers-color-scheme para dark mode */
+  :root {
+    color-scheme: light !important;
+    --body-fg: #1a1a1a;
+    --body-bg: #f9fafb;
+    --body-quiet-color: #6b7280;
+    --body-loud-color: #1a1a1a;
+    --header-color: #fff;
+    --header-branding-color: #fff;
+    --header-bg: #1a1a1a;
+    --header-link-color: #fff;
+    --breadcrumbs-fg: #6b7280;
+    --breadcrumbs-link-fg: #6b7280;
+    --breadcrumbs-bg: #f9fafb;
+    --link-fg: #2563eb;
+    --link-hover-color: #1d4ed8;
+    --link-selected-fg: #1d4ed8;
+    --hairline-color: #e5e7eb;
+    --border-color: #e5e7eb;
+    --darkened-bg: #f3f4f6;
+    --selected-bg: #eff6ff;
+    --selected-row: #eff6ff;
+    --button-fg: #fff;
+    --button-bg: #1a1a1a;
+    --button-hover-bg: #374151;
+    --default-button-fg: #fff;
+    --default-button-bg: #1a1a1a;
+    --default-button-hover-bg: #374151;
+    --close-button-bg: #6b7280;
+    --close-button-hover-bg: #374151;
+    --delete-button-bg: #dc2626;
+    --delete-button-hover-bg: #b91c1c;
+    --font-family-primary: 'Inter', -apple-system, sans-serif;
+    --font-family-monospace: 'Space Mono', monospace;
+  }
+
+  html { color-scheme: light !important; }
+  body { background: #f9fafb !important; color: #1a1a1a !important; font-family: 'Inter', -apple-system, sans-serif; }
+
+  /* Inputs */
+  input[type="text"], input[type="password"], input[type="email"],
+  input[type="number"], select, textarea {
+    background: #fff !important;
+    color: #1a1a1a !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+  }
+  input[type="text"]:focus, input[type="password"]:focus {
+    border-color: #1a1a1a !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(26,26,26,0.08) !important;
+  }
+
+  /* Header */
+  #header { background: #1a1a1a !important; border-bottom: 1px solid #333; }
+  #header a:link, #header a:visited { color: #fff; }
+
+  /* Contenido */
+  #content-main, .module, #content { background: #fff !important; }
+  #content-related { background: #f9fafb !important; }
+
+  /* Login form */
+  .login #content { background: #fff !important; border: 1px solid #e5e7eb; border-radius: 8px; }
+  .login #container { background: #f9fafb !important; }
+
+  /* Módulos */
+  .module h2, .module caption {
+    background: #f9fafb !important;
+    color: #6b7280 !important;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    border-bottom: 1px solid #e5e7eb !important;
+  }
+
+  a { color: #2563eb; }
+  .button, input[type=submit], input[type=button], .submit-row input, a.button {
+    background: #1a1a1a !important; border-color: #1a1a1a !important;
+    color: #fff !important;
+    font-family: 'Inter', sans-serif; font-size: 13px;
+    border-radius: 6px;
+  }
+  .button:hover, input[type=submit]:hover { background: #374151 !important; border-color: #374151 !important; }
+  #nav-sidebar .module { background: #fff !important; }
+  .breadcrumbs { background: #f9fafb !important; border-bottom: 1px solid #e5e7eb !important; }
+  .breadcrumbs a { color: #6b7280; }
+</style>
+{% endblock %}

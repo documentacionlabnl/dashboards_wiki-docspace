@@ -1,0 +1,108 @@
+{% extends "diagnostico/base.html" %}
+{% load static %}
+{% block title %}Dashboards · Documentación LABNL{% endblock %}
+{% block nav_home %}active{% endblock %}
+
+{% block extra_head %}
+<style>
+  .cover-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--text);
+    display: block;
+    background: var(--bg);
+    transition: all 0.2s ease;
+  }
+  .cover-card:hover {
+    border-color: var(--border-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .cover-card__img-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+  }
+  .cover-card__img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: brightness(0.65);
+    transition: filter 0.3s;
+  }
+  .cover-card:hover .cover-card__img-wrap img {
+    filter: brightness(0.55);
+  }
+  .cover-card__overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cover-card__overlay-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+  .cover-card__body {
+    padding: 14px 18px;
+    border-top: 1px solid var(--border);
+  }
+  .cover-card__desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 40px;">
+  <h1 style="font-size: 1.6rem; font-weight: 700; line-height: 1.2; margin-bottom: 10px;">
+    Dashboards de seguimiento · Documentación
+  </h1>
+  <p style="font-size: 0.9rem; color: var(--text-secondary); max-width: 520px;">
+    Te dejamos disponible estas herramientas de visualización de datos sobre el avance de tu iniciativa
+  </p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; max-width: 680px;">
+
+  <!-- Wiki -->
+  <a href="/wikis/" class="cover-card">
+    <div class="cover-card__img-wrap">
+      <img src="{% static 'Back_Wiki.png' %}" alt="Wiki LABNL">
+      <div class="cover-card__overlay">
+        <div class="cover-card__overlay-title">Wiki</div>
+      </div>
+    </div>
+    <div class="cover-card__body">
+      <div class="cover-card__desc">
+        Seguimiento al avance de documentación en las 21 subsecciones de cada prototipo
+      </div>
+    </div>
+  </a>
+
+  <!-- DocSpaces -->
+  <a href="/docspaces/" class="cover-card">
+    <div class="cover-card__img-wrap">
+      <img src="{% static 'Back_Docspace.png' %}" alt="DocSpace LABNL">
+      <div class="cover-card__overlay">
+        <div class="cover-card__overlay-title">DocSpaces</div>
+      </div>
+    </div>
+    <div class="cover-card__body">
+      <div class="cover-card__desc">
+        Seguimiento al avance de tu DocSpace, así como sugerencias de mejoras posibles
+      </div>
+    </div>
+  </a>
+
+</div>
+{% endblock %}

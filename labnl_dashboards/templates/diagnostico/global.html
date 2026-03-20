@@ -1,0 +1,300 @@
+{% extends "diagnostico/base.html" %}
+{% block title %}Vista global · Documentación LABNL{% endblock %}
+{% block nav_global %}active{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  .metric-card {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px; background: var(--bg);
+  }
+  .metric-label {
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 2px; color: var(--text-muted); margin-bottom: 10px;
+  }
+  .metric-value {
+    font-family: var(--mono); font-size: 2rem; font-weight: 700;
+    color: var(--text); line-height: 1;
+  }
+  .metric-unit { font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; font-family: var(--mono); }
+
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+  @media (max-width: 768px) { .charts-grid { grid-template-columns: 1fr; } }
+
+  .chart-card {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px; background: var(--bg);
+  }
+  .chart-card-title {
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 2px; color: var(--text-muted); margin-bottom: 16px;
+  }
+  .chart-canvas-wrap {
+    position: relative;
+    height: 220px;
+  }
+  .search-input {
+    padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 0.8rem; font-family: var(--font); color: var(--text);
+    background: var(--bg); outline: none; min-width: 200px;
+  }
+  .search-input:focus { border-color: var(--border-dark); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div style="margin-bottom: 24px;">
+  <h1 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 4px;">Vista global</h1>
+  <p style="font-size: 0.85rem; color: var(--text-secondary);">Numeralia y avance general del programa de documentación</p>
+</div>
+
+<!-- Filtros -->
+<form method="get" action="/global/">
+  <div class="filters">
+    <select name="actividad" class="filter-select" onchange="this.form.submit()">
+      <option value="">Todas las actividades</option>
+      {% for act in actividades %}
+        <option value="{{ act.nombre }}" {% if filtros.actividad == act.nombre %}selected{% endif %}>
+          {{ act.nombre }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <select name="status" class="filter-select" onchange="this.form.submit()">
+      <option value="">Todos los status</option>
+      <option value="Activo" {% if filtros.status == "Activo" %}selected{% endif %}>Activo</option>
+      <option value="Finalizado" {% if filtros.status == "Finalizado" %}selected{% endif %}>Finalizado</option>
+    </select>
+
+    <select name="año" class="filter-select" onchange="this.form.submit()">
+      <option value="">Todos los años</option>
+      {% for año in años %}
+        <option value="{{ año }}" {% if filtros.año == año|stringformat:"s" %}selected{% endif %}>{{ año }}</option>
+      {% endfor %}
+    </select>
+
+    {% if filtros.actividad or filtros.status or filtros.año %}
+      <a href="/global/" class="filter-clear">Restablecer</a>
+    {% endif %}
+  </div>
+</form>
+
+<!-- Métricas -->
+<div class="metrics-grid">
+  <div class="metric-card">
+    <div class="metric-label">Proyectos</div>
+    <div class="metric-value">{{ total_proyectos }}</div>
+    <div class="metric-unit">en total</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Prototipos</div>
+    <div class="metric-value">{{ total_prototipos }}</div>
+    <div class="metric-unit">en total</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Avance wikis</div>
+    <div class="metric-value">{{ avance_wikis }}<span style="font-size: 1rem;">%</span></div>
+    <div class="metric-unit">promedio</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Avance DocSpaces</div>
+    <div class="metric-value">{{ avance_docspaces }}<span style="font-size: 1rem;">%</span></div>
+    <div class="metric-unit">promedio</div>
+  </div>
+</div>
+
+<!-- Stats Wikis: completas / incompletas / vacías -->
+{% if stats_wikis.total %}
+<div style="border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; background: var(--bg); margin-bottom: 40px; display: flex; align-items: center; justify-content: space-between; gap: 32px; flex-wrap: wrap;">
+  <div>
+    <div class="chart-card-title" style="margin-bottom: 16px;">Estado de subsecciones Wiki</div>
+    <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+      <div style="font-family: var(--mono); font-size: 0.85rem;">
+        <span style="display: inline-block; width: 10px; height: 10px; background: #16a34a; border-radius: 2px; margin-right: 6px;"></span>
+        Completas <strong>{{ stats_wikis.completas }}</strong>
+      </div>
+      <div style="font-family: var(--mono); font-size: 0.85rem;">
+        <span style="display: inline-block; width: 10px; height: 10px; background: #dc2626; border-radius: 2px; margin-right: 6px;"></span>
+        Incompletas <strong>{{ stats_wikis.incompletas }}</strong>
+      </div>
+      <div style="font-family: var(--mono); font-size: 0.85rem;">
+        <span style="display: inline-block; width: 10px; height: 10px; background: #e5e7eb; border-radius: 2px; margin-right: 6px;"></span>
+        Vacías <strong>{{ stats_wikis.vacias }}</strong>
+      </div>
+    </div>
+  </div>
+  <div style="width: 140px; height: 140px; flex-shrink: 0;">
+    <canvas id="chart-estado-wikis"
+      data-completas="{{ stats_wikis.completas }}"
+      data-incompletas="{{ stats_wikis.incompletas }}"
+      data-vacias="{{ stats_wikis.vacias }}"></canvas>
+  </div>
+</div>
+{% endif %}
+
+<!-- Gráficas -->
+<div class="charts-grid">
+
+  <div class="chart-card">
+    <div class="chart-card-title">Avance por tipo de actividad</div>
+    <div class="chart-canvas-wrap">
+      <canvas id="chart-actividades"
+        data-labels='[{% for item in actividades_data %}"{{ item.actividad }}"{% if not forloop.last %},{% endif %}{% endfor %}]'
+        data-values='[{% for item in actividades_data %}{{ item.avance }}{% if not forloop.last %},{% endif %}{% endfor %}]'
+      ></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-card-title">Avance por sección de wiki</div>
+    <div class="chart-canvas-wrap">
+      <canvas id="chart-secciones"
+        data-labels='[{% for item in secciones_data %}"{{ item.seccion }}"{% if not forloop.last %},{% endif %}{% endfor %}]'
+        data-values='[{% for item in secciones_data %}{{ item.avance }}{% if not forloop.last %},{% endif %}{% endfor %}]'
+      ></canvas>
+    </div>
+  </div>
+
+</div>
+
+<!-- Tablas de respaldo -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 40px;">
+
+  <div>
+    <div class="section-label">Actividades — detalle</div>
+    <div style="border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Actividad</th>
+            <th style="width: 60px; text-align: center;">Proyectos</th>
+            <th style="width: 70px; text-align: right; font-family: var(--mono);">%</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in actividades_data %}
+          <tr>
+            <td style="font-weight: 500; font-size: 0.8rem;">{{ item.actividad }}</td>
+            <td style="text-align: center; font-family: var(--mono); color: var(--text-secondary);">{{ item.num_proyectos }}</td>
+            <td style="text-align: right; font-family: var(--mono); font-weight: 700;">{{ item.avance }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">Subsecciones wiki — detalle</div>
+    <div style="border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Sección</th>
+            <th>Subsección</th>
+            <th style="width: 70px; text-align: right; font-family: var(--mono);">%</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in subsecciones_data %}
+          <tr>
+            <td style="font-size: 0.75rem; color: var(--text-muted);">{{ item.seccion }}</td>
+            <td style="font-weight: 500; font-size: 0.8rem;">{{ item.subseccion }}</td>
+            <td style="text-align: right; font-family: var(--mono); font-weight: 700;">{{ item.avance }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function makeHorizontalBar(id, labels, values) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels: JSON.parse(labels),
+      datasets: [{
+        data: JSON.parse(values),
+        backgroundColor: "#1a1a1a",
+        borderRadius: 4,
+        barThickness: 20,
+      }],
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => ` ${ctx.parsed.x}%` }
+        },
+      },
+      scales: {
+        x: {
+          min: 0, max: 100,
+          ticks: {
+            callback: v => v + "%",
+            font: { family: "Inter", size: 11 },
+          },
+          grid: { color: "#f3f4f6" },
+        },
+        y: {
+          ticks: { font: { family: "Inter", size: 11 } },
+          grid: { display: false },
+        },
+      },
+    },
+  });
+}
+
+const ca = document.getElementById("chart-actividades");
+const cs = document.getElementById("chart-secciones");
+makeHorizontalBar("chart-actividades", ca.dataset.labels, ca.dataset.values);
+makeHorizontalBar("chart-secciones",   cs.dataset.labels, cs.dataset.values);
+
+const cw = document.getElementById("chart-estado-wikis");
+if (cw) {
+  new Chart(cw, {
+    type: "doughnut",
+    data: {
+      labels: ["Completa", "Incompleta", "Vacía"],
+      datasets: [{
+        data: [parseInt(cw.dataset.completas), parseInt(cw.dataset.incompletas), parseInt(cw.dataset.vacias)],
+        backgroundColor: ["#16a34a", "#dc2626", "#e5e7eb"],
+        borderWidth: 0,
+        hoverOffset: 4,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      cutout: "72%",
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}` } },
+      },
+    },
+  });
+}
+</script>
+
+{% endblock %}
