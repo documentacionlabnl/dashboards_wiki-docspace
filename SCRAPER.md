@@ -32,6 +32,31 @@ source venv/bin/activate
 python3 manage.py evaluar_wikis
 ```
 
+---
+
+## Filtrar por actividad
+
+Puedes correr el scraper solo para un tipo de actividad:
+
+```bash
+# Solo wikis de Comunidad
+python manage.py evaluar_wikis --actividad Comunidad
+
+# Solo MIC
+python manage.py evaluar_wikis --actividad MIC
+
+# Solo Sesiones de prototipado
+python manage.py evaluar_wikis --actividad "Sesiones de prototipado"
+
+# Solo Proyectos ciudadanos
+python manage.py evaluar_wikis --actividad "Proyectos ciudadanos"
+
+# Combinable con --limite (para pruebas)
+python manage.py evaluar_wikis --actividad Comunidad --limite 5
+```
+
+Sin `--actividad`, evalua todas las wikis como antes.
+
 Si quieres subir los datos actualizados a produccion:
 ```bash
 # Subir db.sqlite3 desde Files tab en PythonAnywhere

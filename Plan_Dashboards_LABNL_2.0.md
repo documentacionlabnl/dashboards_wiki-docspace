@@ -2,7 +2,7 @@
 
 **Fecha:** Marzo 2026
 **Autor:** Ricardo (con apoyo de Claude)
-**Versión:** 1.4 (Fase 5 completada — deploy en PythonAnywhere)
+**Versión:** 1.5 (Fase 6 en progreso — mejoras de admin y scraper)
 
 ---
 
@@ -366,7 +366,12 @@ action=query&titles=X&prop=images   → Verificar si tiene imágenes
 **Responsable:** Ambos
 **Objetivo:** Refinar con base en uso real
 
-**Posibles mejoras:**
+**Mejoras implementadas (23 marzo 2026):**
+- ✅ **Inline de DocSpaces en admin:** Al editar un Proyecto en Django Admin, se ven las 7 evaluaciones DocSpace en una tabla editable (sin ir una por una)
+- ✅ **Columna DocSpaces en lista de Proyectos:** Muestra cuántas evaluaciones DocSpace tiene cada proyecto para identificar rápido cuáles tienen y cuáles no
+- ✅ **Filtro `--actividad` en el scraper:** `python manage.py evaluar_wikis --actividad Comunidad` permite correr el scraper solo para un tipo de actividad
+
+**Posibles mejoras futuras:**
 - Histórico de avance (gráfica de progreso en el tiempo)
 - Exportar reportes en PDF
 - Comparativa entre periodos
@@ -464,4 +469,4 @@ cd scripts
 
 ---
 
-*Este plan es un documento vivo — versión 1.4, Marzo 2026.*
+*Este plan es un documento vivo — versión 1.5, Marzo 2026.*
