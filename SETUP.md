@@ -114,6 +114,46 @@ python3 manage.py verificar_pendientes
 
 ---
 
+## Producción — PythonAnywhere
+
+**URL:** `documentacionlabnl.pythonanywhere.com`
+
+### Ciclo de desarrollo
+
+1. Hacer cambios localmente y probar con `python3 manage.py runserver`
+2. Commit y push:
+   ```bash
+   git add -A
+   git commit -m "descripción del cambio"
+   git push
+   ```
+3. En la Bash de PythonAnywhere:
+   ```bash
+   workon labnl
+   cd ~/dashboards_wiki-docspace/labnl_dashboards
+   git pull
+   ```
+4. Según lo que hayas cambiado:
+
+| Cambié... | Comando extra en PythonAnywhere |
+|---|---|
+| Templates HTML | Ninguno |
+| Views/URLs (Python) | Ninguno |
+| CSS/JS/imágenes | `python manage.py collectstatic --noinput` |
+| Models.py | `python manage.py migrate` |
+
+5. Ir a **Web** tab → click **Reload**
+
+### Notas de producción
+
+- **Django 5.2 LTS** (no 6.0) — PythonAnywhere free tier tiene Python 3.10
+- **Virtualenv:** `workon labnl` para activar (usa `virtualenvwrapper`)
+- **Variables de entorno:** archivo `.env` en el servidor (no en git)
+- Si abres una nueva consola Bash, siempre ejecuta `workon labnl` primero
+- Para crear superusuario en producción: `python manage.py createsuperuser`
+
+---
+
 ## Notas de diseño
 
 - **status_override** en `EvaluacionWiki`: guarda el status verificado manualmente desde el CSV. El scraper no lo sobreescribe — es la fuente de verdad. Si el scraper detecta un cambio, el dashboard sigue mostrando el status del CSV hasta que se re-verifique.

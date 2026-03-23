@@ -2,7 +2,7 @@
 
 **Fecha:** Marzo 2026
 **Autor:** Ricardo (con apoyo de Claude)
-**Versión:** 1.3 (Fase 4 completada — portal funcional con datos reales)
+**Versión:** 1.4 (Fase 5 completada — deploy en PythonAnywhere)
 
 ---
 
@@ -331,18 +331,33 @@ action=query&titles=X&prop=images   → Verificar si tiene imágenes
 
 ---
 
-### FASE 5 — Automatización y despliegue (Claude Code)
+### FASE 5 — Deploy open source ✅ COMPLETADA (19 marzo 2026)
 
 **Responsable:** Claude Code
-**Duración estimada:** 1-2 sesiones
-**Objetivo:** Que el sistema se actualice solo y esté público
+**Objetivo:** Portal público en internet con código abierto
 
-**Tareas:**
-1. Configurar cron job para ejecución periódica del scraper de wikis
-2. Sistema de log cuando hay cambios significativos
-3. Despliegue en servidor (opciones recomendadas: Railway, Render, PythonAnywhere)
-4. Configurar dominio y HTTPS
-5. CI/CD básico con GitHub Actions
+**Lo que se hizo:**
+
+| Tarea | Estado |
+|---|---|
+| `.gitignore` + `requirements.txt` + `.env.example` | ✅ |
+| `settings.py` con `python-decouple` + WhiteNoise | ✅ |
+| Repo público en GitHub: `documentacionlabnl/dashboards_wiki-docspace` | ✅ |
+| LICENSE MIT | ✅ |
+| Deploy en PythonAnywhere (free tier) | ✅ |
+| Archivos estáticos servidos con WhiteNoise | ✅ |
+| Base de datos SQLite subida con datos reales | ✅ |
+
+**Decisiones técnicas:**
+- **PythonAnywhere** sobre Railway/Render/Fly.io — filesystem persistente = SQLite funciona sin migrar a PostgreSQL
+- **Django 5.2 LTS** en lugar de 6.0 — PythonAnywhere free tier tiene Python 3.10, Django 6.0 requiere 3.12+
+- **WhiteNoise** para archivos estáticos — 1 línea de middleware, sin configurar Nginx
+- **python-decouple** para variables de entorno — 1 import, 1 función
+- **Sin Docker, sin CI/CD, sin Celery** — `git pull` + Reload es suficiente para un solo developer
+
+**URL pública:** `documentacionlabnl.pythonanywhere.com`
+
+**Limitación conocida:** El free tier de PythonAnywhere no incluye scheduled tasks ni HTTP saliente libre. El scraper se ejecuta manualmente desde la consola Bash. Ver `SCRAPER.md` para instrucciones.
 
 ---
 
@@ -449,4 +464,4 @@ cd scripts
 
 ---
 
-*Este plan es un documento vivo — versión 1.2, Marzo 2026.*
+*Este plan es un documento vivo — versión 1.4, Marzo 2026.*

@@ -19,17 +19,30 @@ class ActividadAdmin(admin.ModelAdmin):
     total_proyectos.short_description = "Proyectos"
 
 
+# ── EvaluacionDocSpace inline (para ver desde Proyecto) ──────────────────────
+
+class EvaluacionDocSpaceInline(admin.TabularInline):
+    model = EvaluacionDocSpace
+    fields = ["seccion", "status", "notas_mejora", "evaluado_por"]
+    extra = 0
+
+
 # ── Proyecto ────────────────────────────────────────────────────────────────────
 
 @admin.register(Proyecto)
 class ProyectoAdmin(admin.ModelAdmin):
-    list_display = ["nombre", "actividad", "status", "año_inicio", "total_prototipos"]
+    list_display = ["nombre", "actividad", "status", "año_inicio", "total_prototipos", "total_docspaces"]
     list_filter = ["actividad", "status", "año_inicio"]
     search_fields = ["nombre"]
+    inlines = [EvaluacionDocSpaceInline]
 
     def total_prototipos(self, obj):
         return obj.prototipos.count()
     total_prototipos.short_description = "Prototipos"
+
+    def total_docspaces(self, obj):
+        return obj.docspaces.count()
+    total_docspaces.short_description = "DocSpaces"
 
 
 # ── EvaluacionWiki inline (para ver desde Prototipo) ───────────────────────────
