@@ -174,16 +174,21 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--limite", type=int, help="Evalúa solo los primeros N prototipos (pruebas)")
+        parser.add_argument("--actividad", type=str, help="Filtra por actividad (ej. Comunidad, MIC)")
 
     def handle(self, *args, **options):
         fecha = timezone.now()
         prototipos = Prototipo.objects.all().order_by("nombre")
 
+        if options["actividad"]:
+            prototipos = prototipos.filter(proyecto__actividad__nombre=options["actividad"])
+
         if options["limite"]:
             prototipos = prototipos[: options["limite"]]
 
         total = prototipos.count()
-        self.stdout.write(f"Iniciando evaluación de {total} prototipos — {fecha.strftime('%Y-%m-%d %H:%M')}\n")
+        filtro = f" (actividad: {options['actividad']})" if options["actividad"] else ""
+        self.stdout.write(f"Iniciando evaluación de {total} prototipos{filtro} — {fecha.strftime('%Y-%m-%d %H:%M')}\n")
 
         evaluados = 0
         sin_pagina = 0
