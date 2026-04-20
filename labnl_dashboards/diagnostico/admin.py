@@ -36,6 +36,16 @@ class ProyectoAdmin(admin.ModelAdmin):
     search_fields = ["nombre"]
     inlines = [EvaluacionDocSpaceInline]
 
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+        for obj in instances:
+            if isinstance(obj, EvaluacionDocSpace):
+                obj.updated_at = timezone.now()
+            obj.save()
+        for obj in formset.deleted_objects:
+            obj.delete()
+        formset.save_m2m()
+
     def total_prototipos(self, obj):
         return obj.prototipos.count()
     total_prototipos.short_description = "Prototipos"
@@ -73,6 +83,16 @@ class PrototipoAdmin(admin.ModelAdmin):
     search_fields = ["nombre", "proyecto__nombre"]
     inlines = [EvaluacionWikiInline]
 
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+        for obj in instances:
+            if isinstance(obj, EvaluacionWiki):
+                obj.updated_at = timezone.now()
+            obj.save()
+        for obj in formset.deleted_objects:
+            obj.delete()
+        formset.save_m2m()
+
     def avance_verificado_pct(self, obj):
         avance = obj.avance_verificado
         return f"{avance}%" if avance is not None else "—"
@@ -88,7 +108,8 @@ class PrototipoAdmin(admin.ModelAdmin):
 
 @admin.action(description="Marcar seleccionadas como verificadas")
 def verificar_evaluaciones(modeladmin, request, queryset):
-    queryset.update(verificado=True, fecha_verificacion=timezone.now())
+    ahora = timezone.now()
+    queryset.update(verificado=True, fecha_verificacion=ahora, updated_at=ahora)
     # Recalcular status_final_cache
     for ev in queryset:
         ev.save()
@@ -115,6 +136,10 @@ class EvaluacionWikiAdmin(admin.ModelAdmin):
     ]
     actions = [verificar_evaluaciones]
 
+    def save_model(self, request, obj, form, change):
+        obj.updated_at = timezone.now()
+        super().save_model(request, obj, form, change)
+
     def notas_mejora_corta(self, obj):
         return obj.notas_mejora[:60] + "…" if len(obj.notas_mejora) > 60 else obj.notas_mejora
     notas_mejora_corta.short_description = "Notas"
@@ -133,6 +158,10 @@ class EvaluacionDocSpaceAdmin(admin.ModelAdmin):
     list_display = ["proyecto", "seccion", "status", "evaluado_por", "fecha_evaluacion"]
     list_filter = ["status", "seccion", "proyecto__actividad"]
     search_fields = ["proyecto__nombre", "notas_mejora"]
+
+    def save_model(self, request, obj, form, change):
+        obj.updated_at = timezone.now()
+        super().save_model(request, obj, form, change)
 
 
 # ── ActualizacionDashboard ──────────────────────────────────────────────────────

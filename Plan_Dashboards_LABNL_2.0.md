@@ -2,7 +2,7 @@
 
 **Fecha:** Marzo 2026
 **Autor:** Ricardo (con apoyo de Claude)
-**Versión:** 1.5 (Fase 6 en progreso — mejoras de admin y scraper)
+**Versión:** 1.6 (Fase 6 en progreso — mejoras de admin, scraper y timestamp de dashboard)
 
 ---
 
@@ -370,6 +370,11 @@ action=query&titles=X&prop=images   → Verificar si tiene imágenes
 - ✅ **Inline de DocSpaces en admin:** Al editar un Proyecto en Django Admin, se ven las 7 evaluaciones DocSpace en una tabla editable (sin ir una por una)
 - ✅ **Columna DocSpaces en lista de Proyectos:** Muestra cuántas evaluaciones DocSpace tiene cada proyecto para identificar rápido cuáles tienen y cuáles no
 - ✅ **Filtro `--actividad` en el scraper:** `python manage.py evaluar_wikis --actividad Comunidad` permite correr el scraper solo para un tipo de actividad
+
+**Mejoras implementadas (20 abril 2026):**
+- ✅ **Aviso "Actualizado…" refleja edits manuales:** Antes la fecha salía de `ActualizacionDashboard` (solo se creaba tras correr el scraper). Ahora se calcula desde un nuevo campo `updated_at` en `EvaluacionWiki` y `EvaluacionDocSpace`, que se actualiza **únicamente** al editar desde el Django Admin (directo o inline). Imports y scraper no lo tocan.
+- **Implementación:** Migración `0002` agrega `updated_at` (nullable). `admin.py` setea la fecha en `save_model` y `save_formset`. `views.py::_contexto_base` hace `Max("updated_at")` de ambos modelos.
+- **Estado inicial:** todos los `updated_at` arrancan en `NULL` → el aviso queda oculto hasta el primer edit manual.
 
 **Posibles mejoras futuras:**
 - Histórico de avance (gráfica de progreso en el tiempo)

@@ -78,6 +78,9 @@ class EvaluacionWiki(models.Model):
     # Se actualiza al guardar: es status_override si existe, si no status_scraper
     status_final_cache = models.CharField(max_length=20, choices=STATUS_CHOICES, blank=True)
 
+    # Fecha del último edit manual desde el admin (no se toca en imports/scraper)
+    updated_at = models.DateTimeField(null=True, blank=True)
+
     def save(self, *args, **kwargs):
         self.status_final_cache = self.status_override if self.status_override else self.status_scraper
         super().save(*args, **kwargs)
@@ -135,6 +138,9 @@ class EvaluacionDocSpace(models.Model):
     notas_mejora = models.TextField(blank=True)
     fecha_evaluacion = models.DateTimeField(default=timezone.now)
     evaluado_por = models.CharField(max_length=100, blank=True)
+
+    # Fecha del último edit manual desde el admin (no se toca en imports)
+    updated_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.proyecto} | {self.get_seccion_display()}"

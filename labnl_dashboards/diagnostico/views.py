@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Q
+from django.db.models import Q, Max
 
 from .models import (
     Actividad, Proyecto, Prototipo,
@@ -50,9 +50,11 @@ def _avance_proto(prototipo):
 
 
 def _contexto_base():
-    """Contexto compartido: última actualización con cambios verificados."""
-    ultima = ActualizacionDashboard.objects.filter(cambios_verificados__gt=0).first()
-    return {"ultima_actualizacion": ultima.fecha if ultima else None}
+    """Última actualización = edit manual más reciente (wiki o DocSpace) desde el admin."""
+    wiki_max = EvaluacionWiki.objects.aggregate(m=Max("updated_at"))["m"]
+    ds_max = EvaluacionDocSpace.objects.aggregate(m=Max("updated_at"))["m"]
+    candidatos = [d for d in (wiki_max, ds_max) if d]
+    return {"ultima_actualizacion": max(candidatos) if candidatos else None}
 
 
 def home(request):

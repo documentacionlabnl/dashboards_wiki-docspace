@@ -160,3 +160,4 @@ python3 manage.py verificar_pendientes
 - **status_final_cache**: campo calculado = `status_override` si tiene valor, si no `status_scraper`. Es el que usa el dashboard para mostrar el avance.
 - Las secciones de la wiki se muestran en el orden canónico definido en `views.py`: Prototipo → Aprendizajes → Desarrollo (no alfabético).
 - La subsección "Continuidad" está excluida del cálculo y visualización.
+- **updated_at** en `EvaluacionWiki` y `EvaluacionDocSpace`: fecha del último edit manual desde Django Admin. Alimenta el aviso "Actualizado…" en el header del portal (`base.html` vía `views.py::_contexto_base`, que calcula `Max("updated_at")` entre ambos modelos). **No se toca** en imports ni en el scraper — solo se actualiza cuando guardas desde el admin (directo, inline, o acción "Marcar como verificadas"). Arranca en `NULL` para todos los registros; el aviso aparece tras el primer edit manual.
