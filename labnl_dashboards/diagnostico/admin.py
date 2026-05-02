@@ -6,6 +6,7 @@ from .models import (
     Actividad, Proyecto, Prototipo,
     EvaluacionWiki, EvaluacionDocSpace, ActualizacionDashboard,
 )
+from .ordering import seccion_case, subseccion_case, SECCION_ORDER, SUBSECCION_ORDER
 
 
 # ── Actividad ───────────────────────────────────────────────────────────────────
@@ -68,7 +69,11 @@ class EvaluacionWikiInline(admin.TabularInline):
     extra = 0
 
     def get_queryset(self, request):
-        return super().get_queryset(request).order_by("seccion", "subseccion")
+        return (
+            super().get_queryset(request)
+            .annotate(_sec=seccion_case(), _sub=subseccion_case())
+            .order_by("_sec", "_sub")
+        )
 
 
 # ── Prototipo ───────────────────────────────────────────────────────────────────
@@ -82,6 +87,23 @@ class PrototipoAdmin(admin.ModelAdmin):
     list_filter = ["proyecto__actividad", "proyecto__status"]
     search_fields = ["nombre", "proyecto__nombre"]
     inlines = [EvaluacionWikiInline]
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if not change:
+            ahora = timezone.now()
+            EvaluacionWiki.objects.bulk_create([
+                EvaluacionWiki(
+                    prototipo=obj,
+                    seccion=seccion,
+                    subseccion=subseccion,
+                    status_scraper="Vacía",
+                    contenido_chars=0,
+                    fecha_scraper=ahora,
+                )
+                for seccion in SECCION_ORDER
+                for subseccion in SUBSECCION_ORDER.get(seccion, [])
+            ])
 
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
